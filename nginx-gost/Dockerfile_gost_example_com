@@ -1,5 +1,5 @@
 #FROM rnix/nginx-gost
-FROM nginx-gost
+FROM gosha20777/nginx-gost:dev
 
 # Uncoment if you want generate sertificates automatically
 #COPY gen_demo_gost_certs.sh /
