@@ -23,7 +23,7 @@ There are some issues with OpenSSL 1.1.0h and GOST-engine (GOST ciphers are not 
 
 ## Usage
 
-The image has been built and pushed into https://hub.docker.com/r/rnix/openssl-gost/.
+The image has been built and pushed into https://hub.docker.com/repository/docker/gosha20777/openssl-gost.
 In examples below I use image *rnix/openssl-gost* from Docker Hub, but you can build this image for you own and use your tag.
 
 As usual, you can run commands directly from host or you can use 'interactive mode' with `-i`.
