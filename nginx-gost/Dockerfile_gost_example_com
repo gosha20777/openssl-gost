@@ -1,10 +1,15 @@
-FROM rnix/nginx-gost
+#FROM rnix/nginx-gost
+FROM nginx-gost
 
 # Uncoment if you want generate sertificates automatically
-# COPY gen_demo_gost_certs.sh /
-# RUN chmod +x /gen_demo_gost_certs.sh
-# RUN /gen_demo_gost_certs.sh
-# COPY /conf/nginx.conf /etc/nginx/nginx.conf
+#COPY gen_demo_gost_certs.sh /
+#RUN chmod +x /gen_demo_gost_certs.sh
+#RUN /gen_demo_gost_certs.sh
+#COPY /conf/nginx.conf /etc/nginx/nginx.conf
+
+COPY /conf/nginx.conf /etc/nginx/nginx.conf
+COPY /conf/cert.pem /etc/nginx/cert.pem
+COPY /conf/key.pem /etc/nginx/key.pem
 
 #########################
 #        RUNNUNG        #
