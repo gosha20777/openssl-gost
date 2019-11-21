@@ -1,11 +1,20 @@
-FROM debian:stretch-slim
+#/bin/sh
 
-ARG NGINX_VERSION=1.12.2
-ARG OPENSSL_VERSION=1.1.0l
+echo "1 Install dependences"
+apt-get update && apt-get install \
+    wget \
+    unzip \
+    build-essential \
+    libpcre++-dev \
+    libz-dev \
+    gcc \
+    cmake \
+    ca-certificates --no-install-recommends -y
 
-RUN apt-get update \
-  && apt-get install wget build-essential libpcre++-dev libz-dev ca-certificates --no-install-recommends -y \
-  && mkdir -p /usr/local/src \
+echo "2 Build nginx with openssl 1.1.0"
+NGINX_VERSION=1.12.2
+OPENSSL_VERSION=1.1.0l
+mkdir -p /usr/local/src \
   && cd /usr/local/src \
   && wget "http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" -O "nginx-${NGINX_VERSION}.tar.gz" \
   && tar -zxvf "nginx-${NGINX_VERSION}.tar.gz" \
@@ -34,21 +43,13 @@ RUN apt-get update \
   --with-threads \
   --with-http_addition_module \
   --with-http_auth_request_module \
-  --with-http_dav_module \
-  --with-http_flv_module \
   --with-http_gunzip_module \
   --with-http_gzip_static_module \
-  --with-http_mp4_module \
   --with-http_random_index_module \
   --with-http_realip_module \
   --with-http_secure_link_module \
-  --with-http_slice_module \
   --with-http_ssl_module \
-  --with-http_stub_status_module \
-  --with-http_sub_module \
   --with-http_v2_module \
-  --with-mail \
-  --with-mail_ssl_module \
   --with-stream \
   --with-stream_realip_module \
   --with-stream_ssl_module \
@@ -57,12 +58,11 @@ RUN apt-get update \
   && make \
   && make install \
   && mkdir -p /var/cache/nginx/
+OPENSSL_DIR="/usr/local/src/openssl-${OPENSSL_VERSION}/.openssl"
 
-ENV OPENSSL_DIR="/usr/local/src/openssl-${OPENSSL_VERSION}/.openssl"
-
-# Build GOST-engine for OpenSSL
-ARG GOST_ENGINE_VERSION=3bd506dcbb835c644bd15a58f0073ae41f76cb06
-RUN apt-get install cmake unzip -y \
+echo "3 Build GOST-engine for OpenSSL"
+GOST_ENGINE_VERSION=3bd506dcbb835c644bd15a58f0073ae41f76cb06
+apt-get install cmake unzip -y \
   && cd /usr/local/src \
   && wget "https://github.com/gost-engine/engine/archive/${GOST_ENGINE_VERSION}.zip" -O gost-engine.zip \
   && unzip gost-engine.zip -d ./ \
@@ -79,9 +79,9 @@ RUN apt-get install cmake unzip -y \
   && cp -r "${OPENSSL_DIR}/lib/engines-1.1" /usr/lib/x86_64-linux-gnu/ \
   && rm -rf "/usr/local/src/gost-engine.zip" "/usr/local/src/engine-${GOST_ENGINE_VERSION}" 
 
-# Enable engine
-ENV OPENSSL_CONF=/etc/ssl/openssl.cnf
-RUN sed -i '6i openssl_conf=openssl_def' "${OPENSSL_CONF}" \
+echo "3.1 Enable GOST-engine"
+OPENSSL_CONF=/etc/ssl/openssl.cnf
+sed -i '6i openssl_conf=openssl_def' "${OPENSSL_CONF}" \
   && echo "" >> "${OPENSSL_CONF}" \
   && echo "# OpenSSL default section" >> "${OPENSSL_CONF}" \
   && echo "[openssl_def]" >> "${OPENSSL_CONF}" \
@@ -97,15 +97,8 @@ RUN sed -i '6i openssl_conf=openssl_def' "${OPENSSL_CONF}" \
   && echo "dynamic_path = ${OPENSSL_DIR}/lib/engines-1.1/gost.so" >> "${OPENSSL_CONF}f" \
   && echo "default_algorithms = ALL" >> "${OPENSSL_CONF}" \
   && echo "CRYPT_PARAMS = id-Gost28147-89-CryptoPro-A-ParamSet" >> "${OPENSSL_CONF}"
+cp "${OPENSSL_DIR}/bin/openssl" /usr/bin/openssl
 
-RUN cp "${OPENSSL_DIR}/bin/openssl" /usr/bin/openssl
-
-# forward request and error logs to docker log collector
-RUN ln -sf /dev/stdout /var/log/nginx/access.log \
-	&& ln -sf /dev/stderr /var/log/nginx/error.log
-
-EXPOSE 80
-
-STOPSIGNAL SIGTERM
-
-CMD ["nginx", "-g", "daemon off;"]
+echo "Done!"
+echo "Use this command to run nginx: nginx -g daemon off;"
+echo "Nginx config location is: /etc/nginx/nginx.conf"
