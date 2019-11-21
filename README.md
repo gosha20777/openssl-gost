@@ -1,4 +1,4 @@
-# Docker image with OpenSSL 1.1.0, GOST engine and cURL
+# Docker image with OpenSSL 1.1.1, GOST engine and cURL
 
 This image was built to have ability to connect to servers with GOST SSL certificates.
 In addition, it helps to encrypt, decrypt, hash messages with GOST algorithms.
@@ -6,11 +6,8 @@ In addition, it helps to encrypt, decrypt, hash messages with GOST algorithms.
 Since version 1.1.1 OpenSSL does not contain GOST-engine anymore, but it can be compiled and used separately.
 This image does this work.
 
-Output of `openssl ciphers`:
+Output of `openssl ciphers` supports:
 
-ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:DHE-RSA-AES256-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES256-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:DHE-RSA-AES128-SHA:RSA-PSK-AES256-GCM-SHA384:DHE-PSK-AES256-GCM-SHA384:RSA-PSK-CHACHA20-POLY1305:DHE-PSK-CHACHA20-POLY1305:ECDHE-PSK-CHACHA20-POLY1305:AES256-GCM-SHA384:PSK-AES256-GCM-SHA384:PSK-CHACHA20-POLY1305:RSA-PSK-AES128-GCM-SHA256:DHE-PSK-AES128-GCM-SHA256:AES128-GCM-SHA256:PSK-AES128-GCM-SHA256:AES256-SHA256:AES128-SHA256:ECDHE-PSK-AES256-CBC-SHA384:ECDHE-PSK-AES256-CBC-SHA:SRP-RSA-AES-256-CBC-SHA:SRP-AES-256-CBC-SHA:RSA-PSK-AES256-CBC-SHA384:DHE-PSK-AES256-CBC-SHA384:RSA-PSK-AES256-CBC-SHA:DHE-PSK-AES256-CBC-SHA:GOST2012-GOST8912-GOST8912:GOST2001-GOST89-GOST89:AES256-SHA:PSK-AES256-CBC-SHA384:PSK-AES256-CBC-SHA:ECDHE-PSK-AES128-CBC-SHA256:ECDHE-PSK-AES128-CBC-SHA:SRP-RSA-AES-128-CBC-SHA:SRP-AES-128-CBC-SHA:RSA-PSK-AES128-CBC-SHA256:DHE-PSK-AES128-CBC-SHA256:RSA-PSK-AES128-CBC-SHA:DHE-PSK-AES128-CBC-SHA:AES128-SHA:PSK-AES128-CBC-SHA256:PSK-AES128-CBC-SHA
-
-The main part is:
 ```
 GOST2012-GOST8912-GOST8912
 GOST2001-GOST89-GOST89
@@ -18,8 +15,23 @@ GOST2001-GOST89-GOST89
 
 Take a look at GOST-engine documentation: https://github.com/gost-engine/engine/blob/master/README.gost
 
-There are some issues with OpenSSL 1.1.0h and GOST-engine (GOST ciphers are not in list), so versions are fixed in default docker's build args.
+There are some issues with OpenSSL 1.1.1 and GOST-engine (GOST ciphers are not in list), so versions are fixed in default docker's build args.
 
+## How to build
+
+You can pull my docker container: `docker pull gosha20777/openssl-gost:dev`. if you want to build a docker image yourself or build it into your host mashine, see the instructions below.
+
+### Build docker
+```bash
+docker build -t openssl-gost .
+```
+
+### Build form sh script
+
+```
+chmod +x build-openssl-gost.sh
+sh build-openssl-gost.sh
+```
 
 ## Usage
 
@@ -44,7 +56,6 @@ docker run --rm -i -t -v /c/workspace/:/certs/ -w /certs/ gosha20777/openssl-gos
 ```
     
 In the container you run commands.
-
 
 ## Examples
 
@@ -77,7 +88,6 @@ openssl cms -verify -in signed.sgn -certfile cert.pem -CAfile cert.pem -inform d
 ```
 
 More examples with GOST can be found here: https://github.com/gost-engine/engine/blob/master/README.gost
-
 
 ## Certification authority (CA)
 
@@ -116,7 +126,6 @@ To specify it in openssl with verifying signature:
 openssl cms -verify -in signed.txt -signer cert.pem -inform DER -CAfile crypto_pro_ca_bundle.crt -out unsigned.txt
 ```
 
-
 ## Usage in other Dockerfiles
 
 Compiled libraries can be used in other Dockerfiles with multi-stage approach. Basic template is in `any-gost` directory.
@@ -129,7 +138,6 @@ There some notices:
 * Before compiling the main Dockerfile folders `/usr/local/ssl` and `usr/local/curl` should be copied into new image.
 * During building packages openssl and curl can be installed and overwrite new `/usr/bin/openssl` and `/usr/bin/curl`.
 * Specify paths of libraries in configuring scripts to new locations.
-
 
 ## License
 
