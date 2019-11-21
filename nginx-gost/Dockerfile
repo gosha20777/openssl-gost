@@ -1,7 +1,7 @@
 FROM debian:stretch-slim
 
 ARG NGINX_VERSION=1.17.2
-ARG OPENSSL_VERSION=1.1.0l
+ARG OPENSSL_VERSION=1.1.1d
 
 RUN apt-get update \
   && apt-get install wget build-essential libpcre++-dev libz-dev ca-certificates --no-install-recommends -y \
@@ -56,7 +56,7 @@ RUN apt-get update \
 ENV OPENSSL_DIR="/usr/local/src/openssl-${OPENSSL_VERSION}/.openssl"
 
 # Build GOST-engine for OpenSSL
-ARG GOST_ENGINE_VERSION=3bd506dcbb835c644bd15a58f0073ae41f76cb06
+ARG GOST_ENGINE_VERSION=58a46b289d6b8df06072fc9c0304f4b2d3f4b051
 RUN apt-get install cmake unzip -y \
   && cd /usr/local/src \
   && wget "https://github.com/gost-engine/engine/archive/${GOST_ENGINE_VERSION}.zip" -O gost-engine.zip \
@@ -68,9 +68,10 @@ RUN apt-get install cmake unzip -y \
   && cmake -DCMAKE_BUILD_TYPE=Release \
    -DOPENSSL_ROOT_DIR="${OPENSSL_DIR}" \
    -DOPENSSL_INCLUDE_DIR="${OPENSSL_DIR}/include" \
-   -DOPENSSL_LIBRARIES="${OPENSSL_DIR}/lib" .. \
+   -DOPENSSL_LIBRARIES="${OPENSSL_DIR}/lib" \
+   -DOPENSSL_ENGINES_DIR="${OPENSSL_DIR}/lib/engines-1.1" .. \
   && cmake --build . --config Release \
-  && cp ../bin/gost.so "${OPENSSL_DIR}/lib/engines-1.1" \
+  && cp ./bin/gost.so "${OPENSSL_DIR}/lib/engines-1.1" \
   && cp -r "${OPENSSL_DIR}/lib/engines-1.1" /usr/lib/x86_64-linux-gnu/ \
   && rm -rf "/usr/local/src/gost-engine.zip" "/usr/local/src/engine-${GOST_ENGINE_VERSION}" 
 
