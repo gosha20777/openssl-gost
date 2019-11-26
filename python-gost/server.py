@@ -3,6 +3,7 @@ import subprocess
 from flask import Flask
 from flask import request, jsonify
 import json
+import datetime
 
 app = Flask(__name__)
 
@@ -72,9 +73,15 @@ def post_gost2012_request(sert_lacation, url, headers, body):
         print("[ERROR] get curl error: {}".format(respone))
         return json.dumps(respone)
 
-    curl_string = '-s -X POST {0} -H \'Accept-Encoding: gzip, deflate\' -H \'Content-Type: text/plain\' -H \'SOAPAction: {1}\' -d \'{2}\' -k -v --key {3}/key.pem --cert {3}/cert.pem'.format(url, soap_action, body.decode("utf-8"), sert_lacation)
-    
-    print(curl_string)
+    filename = 'log/{0}_{1}'.format(datetime.datetime.now(), hash(body)).replace(" ", "_")
+    f = open('{0}.body.txt'.format(filename), 'wb')
+    f.write(body)
+    f.close()
+
+    curl_string = '-s -X POST {0} -H \'Accept-Encoding: gzip, deflate\' -H \'Content-Type: text/plain\' -H \'SOAPAction: {1}\' -d @{2} -k -v --key {3}/key.pem --cert {3}/cert.pem'.format(url, soap_action, 'body.txt', sert_lacation)
+    f = open('{0}.request_string.txt'.format(filename), 'w')
+    f.write(curl_string)
+    f.close()
     
     process = subprocess.Popen('curl {}'.format(curl_string), stdout=subprocess.PIPE, stderr=None, shell=True)
     #Launch the shell command:
@@ -86,8 +93,16 @@ def post_gost2012_request(sert_lacation, url, headers, body):
         output = json.dumps(respone)
     
     print("[INFO] recive request from {}".format(url))
+    f = open('{0}.response.txt'.format(filename), 'wb')
+    f.write(output)
+    f.close()
+
     return output
 
 
 if __name__ == '__main__':
+    if not os.path.isdir('log/'):
+        os.mkdir('log')
+        print("logs dir created")
+
     app.run(debug=True, host='0.0.0.0', port=80)
