@@ -32,8 +32,11 @@ def ros_riestr_gost2012_1(sert_lacation, query):
 
 
 def get_gost2012_request(sert_lacation, url):
+    
     print("[INFO] sent request to {}".format(url))
-    process = subprocess.Popen('curl -s {0} -k -v --key {1}/key.pem --cert {1}/cert.pem'.format(url, sert_lacation), stdout=subprocess.PIPE, stderr=None, shell=True)
+    
+    process = subprocess.Popen('curl -s {0} -k -v --key {1}/key.pem --cert {1}/cert.pem'.format(url+'?wsdl', sert_lacation), stdout=subprocess.PIPE, stderr=None, shell=True)
+    
     #Launch the shell command:
     output, _ = process.communicate()
     if "curl:" in output.decode("utf-8"):
@@ -58,6 +61,7 @@ def post_gost2012_request(sert_lacation, url, headers, body):
     """
 
     print("[INFO] sent request to {}".format(url))
+
     soap_action = ""
     for (key, value) in headers:
         if '{}'.format(key).lower() == 'soapaction':
@@ -69,6 +73,9 @@ def post_gost2012_request(sert_lacation, url, headers, body):
         return json.dumps(respone)
 
     curl_string = '-s -X POST {0} -H \'Accept-Encoding: gzip, deflate\' -H \'Content-Type: text/plain\' -H \'SOAPAction: {1}\' -d \'{2}\' -k -v --key {3}/key.pem --cert {3}/cert.pem'.format(url, soap_action, body.decode("utf-8"), sert_lacation)
+    
+    print(curl_string)
+    
     process = subprocess.Popen('curl {}'.format(curl_string), stdout=subprocess.PIPE, stderr=None, shell=True)
     #Launch the shell command:
     output, _ = process.communicate()
