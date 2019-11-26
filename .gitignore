@@ -4,3 +4,4 @@
 *.cer
 *.crs
 *.pfx
+*/log/

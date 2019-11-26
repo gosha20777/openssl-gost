@@ -4,6 +4,7 @@ from flask import Flask
 from flask import request, jsonify
 import json
 import datetime
+import logging
 
 app = Flask(__name__)
 
@@ -33,19 +34,28 @@ def ros_riestr_gost2012_1(sert_lacation, query):
 
 
 def get_gost2012_request(sert_lacation, url):
+    logging.info("send GET request to {}".format(url))
     
-    print("[INFO] sent request to {}".format(url))
-    
-    process = subprocess.Popen('curl -s {0} -k -v --key {1}/key.pem --cert {1}/cert.pem'.format(url+'?wsdl', sert_lacation), stdout=subprocess.PIPE, stderr=None, shell=True)
+    curl_string = '-s {0} -k -v --key {1}/key.pem --cert {1}/cert.pem'.format(url + '?wsdl', sert_lacation)
+    filename = 'log/{0}_{1}'.format(datetime.datetime.now(), hash(curl_string)).replace(" ", "_")
+
+    f = open('{0}.request_string.txt'.format(filename), 'w')
+    f.write("curl " + curl_string)
+    f.close()
+
+    process = subprocess.Popen('curl {0}'.format(curl_string), stdout=subprocess.PIPE, stderr=None, shell=True)
     
     #Launch the shell command:
     output, _ = process.communicate()
     if "curl:" in output.decode("utf-8"):
         respone = {"error": output.decode("utf-8").replase("curl:", "")}
-        print("[ERROR] get curl error: {}".format(respone))
+        logging.error("get curl error: {}".format(respone))
         output = json.dumps(respone)
     
-    print("[INFO] recive request from {}".format(url))
+    logging.info("recive GET response to {}".format(url))
+    f = open('{0}.response.txt'.format(filename), 'wb')
+    f.write(output)
+    f.close()
     return output
 
 def post_gost2012_request(sert_lacation, url, headers, body):
@@ -61,7 +71,7 @@ def post_gost2012_request(sert_lacation, url, headers, body):
 </soapenv:Envelope>' -k -v --key key.pem --cert cert.pem
     """
 
-    print("[INFO] sent request to {}".format(url))
+    logging.info("send POST request to {}".format(url))
 
     soap_action = ""
     for (key, value) in headers:
@@ -70,7 +80,7 @@ def post_gost2012_request(sert_lacation, url, headers, body):
     
     if soap_action == "":
         respone = {"error": "SOAPAction is empty"}
-        print("[ERROR] get curl error: {}".format(respone))
+        logging.error("error: {}".format(respone))
         return json.dumps(respone)
 
     filename = 'log/{0}_{1}'.format(datetime.datetime.now(), hash(body)).replace(" ", "_")
@@ -78,21 +88,21 @@ def post_gost2012_request(sert_lacation, url, headers, body):
     f.write(body)
     f.close()
 
-    curl_string = '-s -X POST {0} -H \'Accept-Encoding: gzip, deflate\' -H \'Content-Type: text/plain\' -H \'SOAPAction: {1}\' -d @{2} -k -v --key {3}/key.pem --cert {3}/cert.pem'.format(url, soap_action, 'body.txt', sert_lacation)
+    curl_string = '-s -X POST {0} -H \'Accept-Encoding: gzip, deflate\' -H \'Content-Type: text/plain\' -H \'SOAPAction: {1}\' -d @{2} -k -v --key {3}/key.pem --cert {3}/cert.pem'.format(url, soap_action, filename + '.body.txt', sert_lacation)
     f = open('{0}.request_string.txt'.format(filename), 'w')
-    f.write(curl_string)
+    f.write("curl " + curl_string)
     f.close()
-    
+
     process = subprocess.Popen('curl {}'.format(curl_string), stdout=subprocess.PIPE, stderr=None, shell=True)
     #Launch the shell command:
     output, _ = process.communicate()
 
     if "curl:" in output.decode("utf-8"):
         respone = {"error": output.decode("utf-8").replase("curl:", "")}
-        print("[ERROR] get curl error: {}".format(respone))
+        logging.error("get curl error: {}".format(respone))
         output = json.dumps(respone)
     
-    print("[INFO] recive request from {}".format(url))
+    logging.info("recive POST response to {}".format(url))
     f = open('{0}.response.txt'.format(filename), 'wb')
     f.write(output)
     f.close()
@@ -103,6 +113,7 @@ def post_gost2012_request(sert_lacation, url, headers, body):
 if __name__ == '__main__':
     if not os.path.isdir('log/'):
         os.mkdir('log')
-        print("logs dir created")
-
+    
+    logging.basicConfig(filename="log/_main.log", level=logging.INFO)
+    logging.info("server start at 0.0.0.0:80")
     app.run(debug=True, host='0.0.0.0', port=80)
