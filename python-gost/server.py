@@ -1,7 +1,7 @@
 import os
 import subprocess
 from flask import Flask
-from flask import request, jsonify
+from flask import request, jsonify, Response
 import json
 import datetime
 import logging
@@ -16,20 +16,23 @@ def index():
 def ros_riestr_gost2012(sert_lacation, query):
     if request.method == 'GET':
         response = get_gost2012_request(sert_lacation, "https://portal.rosreestr.ru:4455/" + query)
-        return response, 200
+        return Response(response, status=200, content_type="text/xml; charset=utf-8")
     elif request.method == 'POST':
         body = request.data
         headers = request.headers
-        return post_gost2012_request(sert_lacation, "https://portal.rosreestr.ru:4455/" + query, headers, body), 200
+        response = post_gost2012_request(sert_lacation, "https://portal.rosreestr.ru:4455/" + query, headers, body)
+        return Response(response, status=200, content_type="text/xml; charset=utf-8")
 
 @app.route('/<sert_lacation>/cxf/<query>', methods=['GET', 'POST'])
 def ros_riestr_gost2012_1(sert_lacation, query):
     if request.method == 'GET':
-        return get_gost2012_request(sert_lacation, "https://portal.rosreestr.ru:4455/cxf/" + query)
+        response = get_gost2012_request(sert_lacation, "https://portal.rosreestr.ru:4455/cxf/" + query)
+        return Response(response, status=200, content_type="text/xml; charset=utf-8")
     elif request.method == 'POST':
         body = request.data
         headers = request.headers
-        return post_gost2012_request(sert_lacation, "https://portal.rosreestr.ru:4455/cxf/" + query, headers, body), 200
+        response = post_gost2012_request(sert_lacation, "https://portal.rosreestr.ru:4455/cxf/" + query, headers, body), 200
+        return Response(response, status=200, content_type="text/xml; charset=utf-8")
 
 
 
